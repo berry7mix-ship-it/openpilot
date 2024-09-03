@@ -53,6 +53,7 @@ _services: dict[str, tuple] = {
   "livePose": (True, 20., 4),
   "liveParameters": (True, 20., 5),
   "cameraOdometry": (True, 20., 10),
+  "lateralPlan": (True, 20., 5),
   "thumbnail": (True, 0.2, 1),
   "onroadEvents": (True, 1., 1),
   "carParams": (True, 0.02, 1),
@@ -70,9 +71,13 @@ _services: dict[str, tuple] = {
   "navInstruction": (True, 1., 10),
   "navRoute": (True, 0.),
   "navThumbnail": (True, 0.),
+  "navModel": (True, 2., 4.),
+  "mapRenderState": (True, 2., 1.),
   "qRoadEncodeIdx": (False, 20.),
   "userFlag": (True, 0., 1),
   "microphone": (True, 10., 10),
+
+  "carrotMan": (False, 0.),
 
   # debug
   "uiDebug": (True, 0., 1),
