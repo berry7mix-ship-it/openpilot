@@ -56,11 +56,11 @@ def get_lag_adjusted_curvature(CP, v_ego, psis, curvatures, desired_curvature_la
 
     curvatures = moving_average(curvatures, window_size)
   
-  desired_curvature = interp(model_delay + t_since_plan, ModelConstants.T_IDXS[:CONTROL_N], curvatures)
-  desired_curvature_ff = interp(model_delay + steer_actuator_delay + t_since_plan, ModelConstants.T_IDXS[:CONTROL_N], curvatures)
+  desired_curvature = np.interp(model_delay + t_since_plan, ModelConstants.T_IDXS[:CONTROL_N], curvatures)
+  desired_curvature_ff = np.interp(model_delay + steer_actuator_delay + t_since_plan, ModelConstants.T_IDXS[:CONTROL_N], curvatures)
 
   max_curvature_rate = MAX_LATERAL_JERK / (v_ego**2) # inexact calculation, check https://github.com/commaai/openpilot/pull/24755
-  safe_desired_curvature = clip(desired_curvature,
+  safe_desired_curvature = np.clip(desired_curvature,
                                 current_curvature_desired - max_curvature_rate * DT_MDL,
                                 current_curvature_desired + max_curvature_rate * DT_MDL)
   #safe_desired_curvature_ff = clip(desired_curvature_ff,
