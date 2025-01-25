@@ -279,10 +279,10 @@ class CarController(CarControllerBase):
         can_sends.append(hyundaican.create_frt_radar_opt(self.packer))
 
     new_actuators = actuators.as_builder()
-    new_actuators.steer = apply_steer / self.params.STEER_MAX
-    new_actuators.steerOutputCan = apply_steer
-    new_actuators.steeringAngleDeg = apply_angle
-    new_actuators.accel = accel
+    new_actuators.steer = float(apply_steer / self.params.STEER_MAX)
+    new_actuators.steerOutputCan = float(apply_steer)
+    new_actuators.steeringAngleDeg = float(apply_angle)
+    new_actuators.accel = float(accel)
 
     self.frame += 1
     return new_actuators, can_sends
