@@ -81,6 +81,19 @@
     },
     {
       "group": "조향튜닝",
+      "name": "LatMpcMotionCost",
+      "title": "*LATMPC.MotionCost(11)",
+      "descr": "헤딩가중치",
+      "egroup": "LAT",
+      "etitle": "*LATMPC.MotionCost(11)",
+      "edescr": "",
+      "min": 0,
+      "max": 500,
+      "default": 11,
+      "unit": 1
+    },
+    {
+      "group": "조향튜닝",
       "name": "LatMpcAccelCost",
       "title": "*LATMPC.AccelCost(0)",
       "descr": "횡가속도제한, 낮으면 민첩성증가 안정성감소",
