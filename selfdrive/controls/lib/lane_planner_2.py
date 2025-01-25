@@ -2,7 +2,6 @@ import math
 import numpy as np
 from cereal import log
 from openpilot.common.filter_simple import FirstOrderFilter
-from openpilot.common.numpy_fast import interp, clip
 from openpilot.common.realtime import DT_MDL
 # from openpilot.common.swaglog import cloudlog
 # from openpilot.common.logger import sLogger
@@ -109,16 +108,16 @@ class LanePlanner:
     width_pts = self.rll_y - self.lll_y
     prob_mods = []
     for t_check in (0.0, 1.5, 3.0):
-      width_at_t = interp(t_check * (v_ego + 7), self.ll_x, width_pts)
-      #prob_mods.append(interp(width_at_t, [4.0, 5.0], [1.0, 0.0]))
-      prob_mods.append(interp(width_at_t, [4.5, 6.0], [1.0, 0.0]))
+      width_at_t = np.interp(t_check * (v_ego + 7), self.ll_x, width_pts)
+      #prob_mods.append(np.interp(width_at_t, [4.0, 5.0], [1.0, 0.0]))
+      prob_mods.append(np.interp(width_at_t, [4.5, 6.0], [1.0, 0.0]))
     mod = min(prob_mods)
     l_prob *= mod
     r_prob *= mod
 
     # Reduce reliance on uncertain lanelines
-    l_std_mod = interp(self.lll_std, [.15, .3], [1.0, 0.0])
-    r_std_mod = interp(self.rll_std, [.15, .3], [1.0, 0.0])
+    l_std_mod = np.interp(self.lll_std, [.15, .3], [1.0, 0.0])
+    r_std_mod = np.interp(self.rll_std, [.15, .3], [1.0, 0.0])
     l_prob *= l_std_mod
     r_prob *= r_std_mod
 
@@ -129,7 +128,7 @@ class LanePlanner:
 
     max_updated_count = 10.0 * DT_MDL
     both_lane_available = False
-    speed_lane_width = interp(v_ego*3.6, [0., 60.], [2.8, 3.5])
+    speed_lane_width = np.interp(v_ego*3.6, [0., 60.], [2.8, 3.5])
     if l_prob > 0.5 and r_prob > 0.5:
       both_lane_available = True
       self.lane_width_updated_count = max_updated_count
@@ -158,7 +157,7 @@ class LanePlanner:
     ADJUST_OFFSET_LIMIT = 0.4 #max(self.adjustLaneOffset, self.adjustCurveOffset)
     offset_curve = 0.0
     ## curve offset
-    offset_curve = interp(abs(curve_speed), [50, 200], [self.adjustCurveOffset, 0.0]) * np.sign(curve_speed)
+    offset_curve = np.interp(abs(curve_speed), [50, 200], [self.adjustCurveOffset, 0.0]) * np.sign(curve_speed)
 
     offset_lane = 0.0
     if self.lane_width_left_filtered.x > 2.2 and self.lane_width_right_filtered.x > 2.2: #양쪽에 차로가 여유 있는경우
@@ -166,9 +165,9 @@ class LanePlanner:
     elif self.lane_width_left_filtered.x < 2.0 and self.lane_width_right_filtered.x < 2.0: #양쪽에 차로가 여유 없는경우
       offset_lane = 0.0
     elif self.lane_width_left_filtered.x > self.lane_width_right_filtered.x:
-      offset_lane = interp(self.lane_width, [2.5, 2.9], [0.0, self.adjustLaneOffset]) # 차선이 좁으면 안함..
+      offset_lane = np.interp(self.lane_width, [2.5, 2.9], [0.0, self.adjustLaneOffset]) # 차선이 좁으면 안함..
     else:
-      offset_lane = interp(self.lane_width, [2.5, 2.9], [0.0, -self.adjustLaneOffset]) # 차선이 좁으면 안함..
+      offset_lane = np.interp(self.lane_width, [2.5, 2.9], [0.0, -self.adjustLaneOffset]) # 차선이 좁으면 안함..
 
     #select lane path
     # 차선이 좁아지면, 도로경계쪽에 있는 차선 위주로 따라가도록함.
@@ -191,8 +190,8 @@ class LanePlanner:
     use_laneless_center_adjust = False
     if use_laneless_center_adjust:
       ## 0.5초 앞의 중심을 보도록함.
-      lane_path_y_center = interp(0.5, path_t, lane_path_y)
-      path_xyz_y_center = interp(0.5, path_t, path_xyz[:,1])
+      lane_path_y_center = np.interp(0.5, path_t, lane_path_y)
+      path_xyz_y_center = np.interp(0.5, path_t, path_xyz[:,1])
       #lane_path_y_center = lane_path_y[0]
       #path_xyz_y_center = path_xyz[:,1][0]
       diff_center = (lane_path_y_center - path_xyz_y_center) if not self.lanefull_mode else 0.0
@@ -201,9 +200,9 @@ class LanePlanner:
     #print("center = {:.2f}={:.2f}-{:.2f}, lanefull={}".format(diff_center, lane_path_y_center, path_xyz_y_center, self.lanefull_mode))
     #diff_center = lane_path_y[5] - path_xyz[:,1][5] if not self.lanefull_mode else 0.0
     if offset_curve * offset_lane < 0:
-      offset_total = clip(offset_curve + offset_lane + diff_center, - ADJUST_OFFSET_LIMIT, ADJUST_OFFSET_LIMIT)
+      offset_total = np.clip(offset_curve + offset_lane + diff_center, - ADJUST_OFFSET_LIMIT, ADJUST_OFFSET_LIMIT)
     else:
-      offset_total = clip(max(offset_curve, offset_lane, key=abs) + diff_center, - ADJUST_OFFSET_LIMIT, ADJUST_OFFSET_LIMIT)
+      offset_total = np.clip(max(offset_curve, offset_lane, key=abs) + diff_center, - ADJUST_OFFSET_LIMIT, ADJUST_OFFSET_LIMIT)
 
     ## self.d_prob = 0 if lane_changing
     self.d_prob *= self.lane_change_multiplier  ## 차선변경중에는 꺼버림.
@@ -211,10 +210,10 @@ class LanePlanner:
       #self.lane_offset_filtered.x = 0.0
       pass
     else:
-      self.lane_offset_filtered.update(interp(self.d_prob, [0, 0.3], [0, offset_total]))
+      self.lane_offset_filtered.update(np.interp(self.d_prob, [0, 0.3], [0, offset_total]))
 
     ## laneless at lowspeed
-    self.d_prob *= interp(v_ego*3.6, [5., 10.], [0.0, 1.0])
+    self.d_prob *= np.interp(v_ego*3.6, [5., 10.], [0.0, 1.0])
 
     #self.debugText = "OFFSET({:.2f}={:.2f}+{:.2f}+{:.2f}),Vc:{:.2f},dp:{:.1f},lf:{},lrw={:.1f}|{:.1f}|{:.1f}".format(
     #  self.lane_offset_filtered.x,

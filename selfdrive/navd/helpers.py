@@ -5,7 +5,7 @@ import math
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from openpilot.common.conversions import Conversions
-from openpilot.common.numpy_fast import clip
+import numpy as np
 from openpilot.common.params import Params
 
 DIRECTIONS = ('left', 'right', 'straight')
@@ -78,7 +78,7 @@ def minimum_distance(a: Coordinate, b: Coordinate, p: Coordinate):
 
   ap = p - a
   ab = b - a
-  t = clip(ap.dot(ab) / ab.dot(ab), 0.0, 1.0)
+  t = np.clip(ap.dot(ab) / ab.dot(ab), 0.0, 1.0)
   projection = a + ab * t
   return projection.distance_to(p)
 

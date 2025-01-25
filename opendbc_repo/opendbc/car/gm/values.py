@@ -1,7 +1,7 @@
-﻿from dataclasses import dataclass, field
+from dataclasses import dataclass, field
 from enum import Enum, IntFlag
 
-from opendbc.car.common.numpy_fast import interp
+import numpy as np
 from opendbc.car import Bus, PlatformConfig, DbcDict, Platforms, CarSpecs
 from opendbc.car.structs import CarParams
 from opendbc.car.docs_definitions import CarHarness, CarDocs, CarParts
@@ -75,7 +75,7 @@ class CarControllerParams:
   EV_GAS_BRAKE_THRESHOLD_V = [0.0, -0.14, -0.16, -0.18, -0.215, -0.255, -0.32, -0.41, -0.5, -0.72, -0.905, -1.14, -1.16, -1.175] # [m/s^s]
 
   def update_ev_gas_brake_threshold(self, v_ego):
-    gas_brake_threshold = interp(v_ego, self.EV_GAS_BRAKE_THRESHOLD_BP, self.EV_GAS_BRAKE_THRESHOLD_V)
+    gas_brake_threshold = np.interp(v_ego, self.EV_GAS_BRAKE_THRESHOLD_BP, self.EV_GAS_BRAKE_THRESHOLD_V)
     self.EV_GAS_LOOKUP_BP = [gas_brake_threshold, max(0., gas_brake_threshold), self.ACCEL_MAX]
     self.EV_BRAKE_LOOKUP_BP = [self.ACCEL_MIN, gas_brake_threshold]
 

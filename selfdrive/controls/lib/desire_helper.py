@@ -1,7 +1,7 @@
 from cereal import log
 from openpilot.common.conversions import Conversions as CV
 from openpilot.common.realtime import DT_MDL
-from openpilot.common.numpy_fast import interp
+import numpy as np
 
 from openpilot.common.params import Params
 
@@ -53,14 +53,14 @@ def calculate_lane_width_frog(lane, current_lane, road_edge):
 
 def calculate_lane_width(lane, lane_prob, current_lane, road_edge):
   t = 1.0 # 약 1초 앞의 차선.
-  current_lane_y = interp(t, current_lane.t, current_lane.y)
-  lane_y = interp(t, lane.t, lane.y)
+  current_lane_y = np.interp(t, current_lane.t, current_lane.y)
+  lane_y = np.interp(t, lane.t, lane.y)
   distance_to_lane = abs(current_lane_y - lane_y)
   #if lane_prob < 0.3:# 차선이 없으면 없는것으로 간주시킴.
   #  distance_to_lane = min(2.0, distance_to_lane)
-  road_edge_y = interp(t, road_edge.t, road_edge.y)
+  road_edge_y = np.interp(t, road_edge.t, road_edge.y)
   distance_to_road_edge = abs(current_lane_y - road_edge_y)
-  distance_to_road_edge_far = abs(current_lane_y - interp(2.0, road_edge.t, road_edge.y))
+  distance_to_road_edge_far = abs(current_lane_y - np.interp(2.0, road_edge.t, road_edge.y))
   return min(distance_to_lane, distance_to_road_edge), distance_to_road_edge, distance_to_road_edge_far, lane_prob > 0.5
 
 class ExistCounter:

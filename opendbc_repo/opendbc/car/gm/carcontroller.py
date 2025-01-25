@@ -7,7 +7,6 @@ from opendbc.car import Bus, DT_CTRL, apply_driver_steer_torque_limits, structs,
 from opendbc.car.gm import gmcan
 from opendbc.car.common.conversions import Conversions as CV
 from opendbc.car.gm.values import DBC, CanBus, CarControllerParams, CruiseButtons, GMFlags, CC_ONLY_CAR, SDGM_CAR, EV_CAR, AccState, CC_REGEN_PADDLE_CAR, CAR
-from opendbc.car.common.numpy_fast import interp, clip
 from opendbc.car.interfaces import CarControllerBase
 from openpilot.selfdrive.controls.lib.drive_helpers import apply_deadzone
 from openpilot.selfdrive.controls.lib.vehicle_model import ACCELERATION_DUE_TO_GRAVITY

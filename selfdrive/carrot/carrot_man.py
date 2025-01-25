@@ -16,7 +16,6 @@ from cereal import log
 import cereal.messaging as messaging
 from openpilot.common.realtime import Ratekeeper
 from openpilot.common.params import Params
-from openpilot.common.numpy_fast import clip, interp
 from openpilot.common.filter_simple import StreamingMovingAverage
 from openpilot.system.hardware import PC, TICI
 from openpilot.selfdrive.navd.helpers import Coordinate
@@ -354,7 +353,7 @@ class CarrotMan:
                 p1, p2, p3 = resampled_points[i], resampled_points[i + sample], resampled_points[i + sample * 2]
                 curvature = calculate_curvature(p1, p2, p3)
                 curvatures.append(curvature)
-                speed = interp(abs(curvature), V_CURVE_LOOKUP_BP, V_CRUVE_LOOKUP_VALS)
+                speed = np.interp(abs(curvature), V_CURVE_LOOKUP_BP, V_CRUVE_LOOKUP_VALS)
                 if abs(curvature) < 0.02:
                   speed = max(speed, self.carrot_serv.nRoadLimitSpeed)
                 speeds.append(speed)
@@ -744,7 +743,7 @@ class CarrotMan:
     v_ego = sm['carState'].vEgo
     # 회전속도를 선속도 나누면 : 곡률이 됨. [12:20]은 약 1.4~3.5초 앞의 곡률을 계산함.
     orientationRates = np.array(sm['modelV2'].orientationRate.z, dtype=np.float32)
-    speed = min(self.turn_speed_last / 3.6, clip(v_ego, 0.5, 100.0))
+    speed = min(self.turn_speed_last / 3.6, np.clip(v_ego, 0.5, 100.0))
 
     # 절대값이 가장 큰 요소의 인덱스를 찾습니다.
     max_index = np.argmax(np.abs(orientationRates[12:20]))
@@ -758,8 +757,8 @@ class CarrotMan:
 
     if abs(curvature) > 0.0001:
         # 곡률의 절대값을 사용하여 속도를 계산합니다.
-        base_speed = interp(abs(curvature), V_CURVE_LOOKUP_BP, V_CRUVE_LOOKUP_VALS)
-        base_speed = clip(base_speed, self.autoCurveSpeedLowerLimit, 255)
+        base_speed = np.interp(abs(curvature), V_CURVE_LOOKUP_BP, V_CRUVE_LOOKUP_VALS)
+        base_speed = np.clip(base_speed, self.autoCurveSpeedLowerLimit, 255)
         # 곡률의 부호를 적용하여 turn_speed의 부호를 결정합니다.
         turn_speed = np.sign(curvature) * base_speed
 
@@ -1252,8 +1251,8 @@ class CarrotServ:
     turn_dist_for_speed = self.autoTurnControlTurnEnd * turn_speed / 3.6 # 5
     fork_dist_for_speed = self.autoTurnControlTurnEnd * fork_speed / 3.6 # 5
     stop_dist_for_speed = 5
-    start_fork_dist = interp(self.nRoadLimitSpeed, [30, 50, 100], [160, 200, 350])
-    start_turn_dist = interp(self.nTBTNextRoadWidth, [5, 10], [43, 60])
+    start_fork_dist = np.interp(self.nRoadLimitSpeed, [30, 50, 100], [160, 200, 350])
+    start_turn_dist = np.interp(self.nTBTNextRoadWidth, [5, 10], [43, 60])
     turn_info_mapping = {
         1: {"type": "turn left", "speed": turn_speed, "dist": turn_dist_for_speed, "start": start_fork_dist},
         2: {"type": "turn right", "speed": turn_speed, "dist": turn_dist_for_speed, "start": start_fork_dist},

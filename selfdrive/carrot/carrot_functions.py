@@ -2,7 +2,7 @@ from enum import Enum
 
 from cereal import log
 from openpilot.common.params import Params
-from openpilot.common.numpy_fast import clip, interp
+import numpy as np
 from openpilot.common.realtime import DT_MDL
 from openpilot.common.conversions import Conversions as CV
 from openpilot.common.filter_simple import StreamingMovingAverage
@@ -165,7 +165,7 @@ class CarrotPlanner:
   def get_carrot_accel(self, v_ego):
     cruiseMaxVals = [self.cruiseMaxVals1, self.cruiseMaxVals2, self.cruiseMaxVals3, self.cruiseMaxVals4, self.cruiseMaxVals5, self.cruiseMaxVals6]
     factor = self.myHighModeFactor if self.myDrivingMode == DrivingMode.High else self.mySafeFactor
-    return interp(v_ego, A_CRUISE_MAX_BP_CARROT, cruiseMaxVals) * factor
+    return np.interp(v_ego, A_CRUISE_MAX_BP_CARROT, cruiseMaxVals) * factor
 
   def get_T_FOLLOW(self, personality=log.LongitudinalPersonality.standard):
     if personality==log.LongitudinalPersonality.moreRelaxed:
@@ -199,7 +199,7 @@ class CarrotPlanner:
       self.jerk_factor_apply = self.jerk_factor * self.dynamicTFollowLC   # 차선변경시 jerk factor를 줄여 aggresive하게
     elif lead.status:      
       if self.dynamicTFollow > 0.0:
-        gap_dist_adjust = clip((desired_follow_distance - lead.dRel) * self.dynamicTFollow, - 0.1, 1.0)
+        gap_dist_adjust = np.clip((desired_follow_distance - lead.dRel) * self.dynamicTFollow, - 0.1, 1.0)
         t_follow += gap_dist_adjust
         if gap_dist_adjust < 0:
           self.jerk_factor_apply = self.jerk_factor * 0.5 # 전방차량을 따라갈때는 aggressive하게.
@@ -221,7 +221,7 @@ class CarrotPlanner:
       stopSign = model_x < 20.0 and model_v < 10.0
     elif v_ego_kph < 82.0:
       stopSign = (model_x < d_rel - 3.0 and
-                  model_x < interp(v[0], [60/3.6, 80/3.6], [120.0, 150]) and
+                  model_x < np.interp(v[0], [60/3.6, 80/3.6], [120.0, 150]) and
                   ((model_v < 3.0) or (model_v < v[0]*0.7)) and
                   abs(y[-1]) < 5.0)
       # 정상주행중 감속하는 경우(카메라 감속등), 오감지가 많음.
@@ -397,8 +397,8 @@ class CarrotPlanner:
         else:
           self.comfort_brake = self.comfortBrake * 0.9
           #self.comfort_brake = COMFORT_BRAKE
-          self.trafficStopAdjustRatio = interp(v_ego_kph, [0, 100], [1.0, 0.7])
-          stop_dist = self.xStop * interp(self.xStop, [0, 100], [1.0, self.trafficStopAdjustRatio])  ##�����Ÿ��� ���� �����Ÿ� ��������
+          self.trafficStopAdjustRatio = np.interp(v_ego_kph, [0, 100], [1.0, 0.7])
+          stop_dist = self.xStop * np.interp(self.xStop, [0, 100], [1.0, self.trafficStopAdjustRatio])  ##�����Ÿ��� ���� �����Ÿ� ��������
           if stop_dist > 10.0: ### 10M�̻��϶���, self.actual_stop_distance�� ������Ʈ��.
             self.actual_stop_distance = stop_dist
           stop_model_x = 0
