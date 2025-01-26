@@ -80,6 +80,7 @@ private:
 
   // FrogPilot variables
   Params params;
+  uint64_t model_rcv_frame = 0;
 
   float MAX_ZOOM = 17;  // carrot
 private slots:
