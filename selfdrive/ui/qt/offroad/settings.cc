@@ -217,6 +217,10 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
       process.waitForFinished();
 
       QString output = process.readAllStandardOutput();
+      if (output.isEmpty()) {
+        ConfirmationDialog::alert(tr("Failed to read Git status."), this);
+        return;
+      }
       if (!output.contains("Your branch is behind")) {
         ConfirmationDialog::alert(tr("Already up to date."), this);
         return;
