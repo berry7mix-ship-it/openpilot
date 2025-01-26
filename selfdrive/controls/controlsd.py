@@ -18,7 +18,6 @@ from openpilot.selfdrive.controls.lib.latcontrol_angle import LatControlAngle, S
 from openpilot.selfdrive.controls.lib.latcontrol_torque import LatControlTorque
 from openpilot.selfdrive.controls.lib.longcontrol import LongControl
 from openpilot.selfdrive.controls.lib.vehicle_model import VehicleModel
-from openpilot.selfdrive.locationd.helpers import PoseCalibrator, Pose
 
 from openpilot.common.realtime import DT_CTRL, DT_MDL
 from openpilot.selfdrive.modeld.constants import ModelConstants
@@ -42,7 +41,7 @@ class Controls:
     self.disable_dm = False
 
     self.sm = messaging.SubMaster(['liveParameters', 'liveTorqueParameters', 'modelV2', 'selfdriveState',
-                                   'liveCalibration', 'livePose', 'longitudinalPlan', 'carState', 'carOutput',
+                                   'liveCalibration', 'liveLocationKalman', 'longitudinalPlan', 'carState', 'carOutput',
                                    'carrotMan', 'lateralPlan', 'radarState',
                                    'driverMonitoringState', 'onroadEvents', 'driverAssistance'], poll='selfdriveState')
     self.pm = messaging.PubMaster(['carControl', 'controlsState'])
@@ -50,8 +49,6 @@ class Controls:
     self.steer_limited = False
     self.desired_curvature = 0.0
 
-    self.pose_calibrator = PoseCalibrator()
-    self.calibrated_pose: Pose|None = None
 
     self.LoC = LongControl(self.CP)
     self.VM = VehicleModel(self.CP)
@@ -65,11 +62,6 @@ class Controls:
 
   def update(self):
     self.sm.update(15)
-    if self.sm.updated["liveCalibration"]:
-      self.pose_calibrator.feed_live_calib(self.sm['liveCalibration'])
-    if self.sm.updated["livePose"]:
-      device_pose = Pose.from_live_pose(self.sm['livePose'])
-      self.calibrated_pose = self.pose_calibrator.build_calibrated_pose(device_pose)
 
   def state_control(self):
     CS = self.sm['carState']
@@ -167,7 +159,7 @@ class Controls:
     actuators.curvature = float(self.desired_curvature)
     steer, steeringAngleDeg, lac_log = self.LaC.update(CC.latActive, CS, self.VM, lp,
                                                                             self.steer_limited, desired_curvature_ff, self.desired_curvature,
-                                                                            self.calibrated_pose) # TODO what if not available
+                                                                            self.sm['liveLocationKalman']) # TODO what if not available
     actuators.steer = float(steer)
     actuators.steeringAngleDeg = float(steeringAngleDeg)
     # Ensure no NaNs/Infs
@@ -187,9 +179,12 @@ class Controls:
 
     # Orientation and angle rates can be useful for carcontroller
     # Only calibrated (car) frame is relevant for the carcontroller
-    if self.calibrated_pose is not None:
-      CC.orientationNED = self.calibrated_pose.orientation.xyz.tolist()
-      CC.angularVelocity = self.calibrated_pose.angular_velocity.xyz.tolist()
+    orientation_value = list(self.sm['liveLocationKalman'].calibratedOrientationNED.value)
+    if len(orientation_value) > 2:
+      CC.orientationNED = orientation_value
+    angular_rate_value = list(self.sm['liveLocationKalman'].angularVelocityCalibrated.value)
+    if len(angular_rate_value) > 2:
+      CC.angularVelocity = angular_rate_value
 
     CC.cruiseControl.override = CC.enabled and not CC.longActive and self.CP.openpilotLongitudinalControl
     CC.cruiseControl.cancel = CS.cruiseState.enabled and (not CC.enabled or not self.CP.pcmCruise)

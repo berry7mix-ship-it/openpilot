@@ -2293,7 +2293,7 @@ struct LiveParametersData {
   debugFilterState @16 :FilterState;
 
   yawRateDEPRECATED @7 :Float32;
-  filterStateDEPRECATED @15 :LiveLocationKalman.Measurement;
+  filterState @15 :LiveLocationKalman.Measurement;
 
   struct FilterState {
     value @0 : List(Float64);
@@ -2679,7 +2679,7 @@ struct Event {
     lateralPlan @64 :LateralPlan;
     navModel @104 :NavModelData;
     uiPlanDEPRECATED @106 :UiPlan;
-    liveLocationKalmanDEPRECATED @72 :LiveLocationKalman;
+    liveLocationKalman @72 :LiveLocationKalman;
     liveTracksDEPRECATED @16 :List(LiveTracksDEPRECATED);
     onroadEventsDEPRECATED @68: List(Car.OnroadEventDEPRECATED);
   }

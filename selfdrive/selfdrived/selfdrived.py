@@ -76,7 +76,7 @@ class SelfdriveD:
       # no vipc in replay will make them ignored anyways
       ignore += ['roadCameraState', 'wideRoadCameraState']
     self.sm = messaging.SubMaster(['deviceState', 'pandaStates', 'peripheralState', 'modelV2', 'liveCalibration',
-                                   'carOutput', 'driverMonitoringState', 'longitudinalPlan', 'livePose',
+                                   'carOutput', 'driverMonitoringState', 'longitudinalPlan', 'liveLocationKalman',
                                    'managerState', 'liveParameters', 'radarState', 'liveTorqueParameters',
                                    'carrotMan',
                                    'controlsState', 'carControl', 'driverAssistance', 'alertDebug'] + \
@@ -322,13 +322,15 @@ class SelfdriveD:
       self.logged_comm_issue = None
 
     if not self.CP.notCar:
-      if not self.sm['livePose'].posenetOK:
+      if not self.sm['liveLocationKalman'].posenetOK:
         self.events.add(EventName.posenetInvalid)
-      if not self.sm['livePose'].inputsOK:
+      if not self.sm['liveLocationKalman'].deviceStable:
+        self.events.add(EventName.deviceFalling)
+      if not self.sm['liveLocationKalman'].inputsOK:
         self.events.add(EventName.locationdTemporaryError)
       if not self.sm['liveParameters'].valid and not TESTING_CLOSET and (not SIMULATION or REPLAY):
         self.events.add(EventName.paramsdTemporaryError)
-
+        
     # conservative HW alert. if the data or frequency are off, locationd will throw an error
     if any((self.sm.frame - self.sm.recv_frame[s])*DT_CTRL > 10. for s in self.sensor_packets):
       self.events.add(EventName.sensorDataInvalid)
@@ -367,7 +369,7 @@ class SelfdriveD:
     if not SIMULATION or REPLAY:
       # Not show in first 1.5 km to allow for driving out of garage. This event shows after 5 minutes
       gps_ok = self.sm.recv_frame[self.gps_location_service] > 0 and (self.sm.frame - self.sm.recv_frame[self.gps_location_service]) * DT_CTRL < 2.0
-      if not gps_ok and self.sm['livePose'].inputsOK and (self.distance_traveled > 1500):
+      if not gps_ok and self.sm['liveLocationKalman'].inputsOK and (self.distance_traveled > 1500):
         if self.distance_traveled < 1600:
           self.events.add(EventName.noGps)
       #if gps_ok:
