@@ -178,16 +178,45 @@ void MapWindow::updateState(const UIState &s) {
       uiState()->scene.navigate_on_openpilot = nav_enabled;
   }
 
-  if (sm.updated("carrotMan")) {
-    auto carrotMan = sm["carrotMan"].getCarrotMan();
+  float lat = 0, lon = 0, bearing = 0, velocity = 0;
+  bool gps_updated = false;
 
-    locationd_valid = carrotMan.getActiveCarrot() > 1;
+  auto carrotMan = sm["carrotMan"].getCarrotMan();
+  bool active_carrot_man = carrotMan.getActiveCarrot() > 1;
 
+  if (!active_carrot_man && sm.updated("liveLocationKalman")) {
+    auto locationd_location = sm["liveLocationKalman"].getLiveLocationKalman();
+    auto locationd_pos = locationd_location.getPositionGeodetic();
+    auto locationd_orientation = locationd_location.getCalibratedOrientationNED();
+    auto locationd_velocity = locationd_location.getVelocityCalibrated();
+    auto locationd_ecef = locationd_location.getPositionECEF();
+
+    locationd_valid = (locationd_pos.getValid() && locationd_orientation.getValid() && locationd_velocity.getValid() && locationd_ecef.getValid());
     if (locationd_valid) {
-      last_position = QMapLibre::Coordinate(carrotMan.getXPosLat(), carrotMan.getXPosLon());
-      last_bearing = carrotMan.getXPosAngle();
-      velocity_filter.update(std::max(10.0, carrotMan.getXPosSpeed()/3.6));
+      // Check std norm
+      auto pos_ecef_std = locationd_ecef.getStd();
+      bool pos_accurate_enough = sqrt(pow(pos_ecef_std[0], 2) + pow(pos_ecef_std[1], 2) + pow(pos_ecef_std[2], 2)) < 100;
+      locationd_valid = pos_accurate_enough;
     }
+    lat = locationd_pos.getValue()[0];
+    lon = locationd_pos.getValue()[1];
+    bearing = RAD2DEG(locationd_orientation.getValue()[2]);
+    velocity = locationd_velocity.getValue()[0];
+    gps_updated = true;
+  }
+
+  if (active_carrot_man && sm.updated("carrotMan")) {
+    lat = carrotMan.getXPosLat();
+    lon = carrotMan.getXPosLon();
+    bearing = carrotMan.getXPosAngle();
+    velocity = carrotMan.getXPosSpeed()/3.6;
+    gps_updated = true;
+  }
+
+  if (gps_updated) {
+    last_position = QMapLibre::Coordinate(lat, lon);
+    last_bearing = bearing;
+    velocity_filter.update(std::max(10.0, (double)velocity));
   }
 
   bool allow_open = false;
@@ -283,6 +312,16 @@ void MapWindow::updateState(const UIState &s) {
 
     route_rcv_frame = sm.rcv_frame("navRoute");
     updateDestinationMarker();
+  }
+  if (loaded_once && (sm.rcv_frame("modelV2") != model_rcv_frame)) {
+    auto locationd_location = sm["liveLocationKalman"].getLiveLocationKalman();
+    auto model_path = model_to_collection(locationd_location.getCalibratedOrientationECEF(), locationd_location.getPositionECEF(), sm["modelV2"].getModelV2().getPosition(), last_position->first, last_position->second);
+    QMapLibre::Feature model_path_feature(QMapLibre::Feature::LineStringType, model_path, {}, {});
+    QVariantMap modelV2Path;
+    modelV2Path["type"] =  "geojson";
+    modelV2Path["data"] = QVariant::fromValue<QMapLibre::Feature>(model_path_feature);
+    m_map->updateSource("modelPathSource", modelV2Path);
+    model_rcv_frame = sm.rcv_frame("modelV2");
   }
 }
 
