@@ -54,7 +54,7 @@ def fill_model_msg(msg: capnp._DynamicStructBuilder, net_output_data: dict[str, 
   modelV2.frameAge = frame_age
   modelV2.frameDropPerc = frame_drop * 100
   modelV2.timestampEof = timestamp_eof
-  modelV2.locationMonoTime = timestamp_llk
+  #modelV2.locationMonoTime = timestamp_llk
   modelV2.modelExecutionTime = model_execution_time
   modelV2.navEnabled = nav_enabled
 
