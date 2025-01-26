@@ -24,7 +24,7 @@ const int PIXELS_PER_TILE = 256;
 const int MAP_OFFSET = 128;
 
 const bool TEST_MODE = getenv("MAP_RENDER_TEST_MODE");
-//const int LLK_DECIMATION = TEST_MODE ? 1 : 10;
+const int LLK_DECIMATION = TEST_MODE ? 1 : 10;
 
 float get_zoom_level_for_scale(float lat, float meters_per_pixel) {
   float meters_per_tile = meters_per_pixel * PIXELS_PER_TILE;
@@ -110,8 +110,7 @@ MapRenderer::MapRenderer(const QMapLibre::Settings &settings, bool online) : m_s
     vipc_server->start_listener();
 
     pm.reset(new PubMaster({"navThumbnail", "mapRenderState"}));
-    //sm.reset(new SubMaster({"liveLocationKalman", "navRoute"}, {"liveLocationKalman"}));
-    sm.reset(new SubMaster({ "carrotMan", "navRoute" }));
+    sm.reset(new SubMaster({"liveLocationKalman", "navRoute"}, {"liveLocationKalman"}));
 
     timer = new QTimer(this);
     timer->setSingleShot(true);
@@ -123,12 +122,34 @@ MapRenderer::MapRenderer(const QMapLibre::Settings &settings, bool online) : m_s
 void MapRenderer::msgUpdate() {
   sm->update(1000);
 
-  if (sm->updated("carrotMan")) {
-    auto carrotMan = (*sm)["carrotMan"].getCarrotMan();
-    if (carrotMan.getActiveCarrot() > 1) {
+  float lat = 0.0;
+  float lon = 0.0;
+  float bearing = 0.0;
+  bool gps_updated = false;
+  auto carrotMan = (*sm)["carrotMan"].getCarrotMan();
+  bool active_carrot_man = carrotMan.getActiveCarrot() > 1;
 
-      float bearing = carrotMan.getXPosAngle();
-      updatePosition(get_point_along_line(carrotMan.getXPosLat(), carrotMan.getXPosLon(), bearing, MAP_OFFSET), bearing);
+  if (!active_carrot_man && sm->updated("liveLocationKalman")) {
+    auto location = (*sm)["liveLocationKalman"].getLiveLocationKalman();
+    auto pos = location.getPositionGeodetic();
+    auto orientation = location.getCalibratedOrientationNED();
+
+    if ((sm->rcv_frame("liveLocationKalman") % LLK_DECIMATION) == 0) {
+      bearing = RAD2DEG(orientation.getValue()[2]);
+      lat = pos.getValue()[0];
+      lon = pos.getValue()[1];
+      gps_updated = true;
+    }
+  }
+  if (active_carrot_man && sm->updated("carrotMan")) {
+    bearing = carrotMan.getXPosAngle();
+    lat = carrotMan.getXPosLat();
+    lon = carrotMan.getXPosLon();
+    gps_updated = true;
+  }
+        
+  if(gps_updated) {
+      updatePosition(get_point_along_line(lat, lon, bearing, MAP_OFFSET), bearing);  
       // TODO: use the static rendering mode instead
       // retry render a few times
       for (int i = 0; i < 5 && !rendered(); i++) {
@@ -144,7 +165,6 @@ void MapRenderer::msgUpdate() {
       if (!rendered()) {
         publish(0, false);
       }
-    }
   }
 
   if (sm->updated("navRoute")) {
@@ -188,7 +208,7 @@ void MapRenderer::update() {
 
   if ((vipc_server != nullptr) && loaded()) {
     publish((end_t - start_t) / 1000.0, true);
-    last_llk_rendered = (*sm)["carrotMan"].getLogMonoTime();
+    last_llk_rendered = (*sm)["liveLocationKalman"].getLogMonoTime();
   }
 }
 
@@ -205,13 +225,14 @@ void MapRenderer::publish(const double render_time, const bool loaded) {
   QImage cap = fbo->toImage().convertToFormat(QImage::Format_RGB888, Qt::AutoColor);
 
   auto carrotMan = (*sm)["carrotMan"].getCarrotMan();
-  bool valid = loaded && (carrotMan.getActiveCarrot() > 1);
+  auto location = (*sm)["liveLocationKalman"].getLiveLocationKalman();
+  bool valid = loaded && ((carrotMan.getActiveCarrot() > 1) || ((location.getStatus() == cereal::LiveLocationKalman::Status::VALID) && location.getPositionGeodetic().getValid()));
   ever_loaded = ever_loaded || loaded;
   uint64_t ts = nanos_since_boot();
   VisionBuf* buf = vipc_server->get_buffer(VisionStreamType::VISION_STREAM_MAP);
   VisionIpcBufExtra extra = {
     .frame_id = frame_id,
-    .timestamp_sof = (*sm)["carrotMan"].getLogMonoTime(),
+    .timestamp_sof = (*sm)["liveLocationKalman"].getLogMonoTime(),
     .timestamp_eof = ts,
     .valid = valid,
   };
@@ -233,7 +254,7 @@ void MapRenderer::publish(const double render_time, const bool loaded) {
     // Full image in thumbnails in test mode
     kj::Array<capnp::byte> buffer_kj = kj::heapArray<capnp::byte>((const capnp::byte*)cap.bits(), cap.sizeInBytes());
     sendThumbnail(ts, buffer_kj);
-  } else if (frame_id % 10 == 0) {
+  } else if (frame_id % 100 == 0) {
     // Write jpeg into buffer
     QByteArray buffer_bytes;
     QBuffer buffer(&buffer_bytes);
@@ -260,7 +281,7 @@ void MapRenderer::publish(const double render_time, const bool loaded) {
   auto evt = msg.initEvent();
   auto state = evt.initMapRenderState();
   evt.setValid(valid);
-  state.setLocationMonoTime((*sm)["carrotMan"].getLogMonoTime());
+  state.setLocationMonoTime((*sm)["liveLocationKalman"].getLogMonoTime());
   state.setRenderTime(render_time);
   state.setFrameId(frame_id);
   pm->send("mapRenderState", msg);

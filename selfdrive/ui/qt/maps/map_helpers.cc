@@ -37,9 +37,21 @@ QGeoCoordinate to_QGeoCoordinate(const QMapLibre::Coordinate &in) {
 QMapLibre::CoordinatesCollections model_to_collection(
   const cereal::LiveLocationKalman::Measurement::Reader &calibratedOrientationECEF,
   const cereal::LiveLocationKalman::Measurement::Reader &positionECEF,
-  const cereal::XYZTData::Reader &line){
+  const cereal::XYZTData::Reader &line,
+  std::optional<double> lat,
+  std::optional<double> lon){
 
-  Eigen::Vector3d ecef(positionECEF.getValue()[0], positionECEF.getValue()[1], positionECEF.getValue()[2]);
+  Eigen::Vector3d ecef;
+  if (lat.has_value() && lon.has_value()) {
+    Geodetic geodetic{ lat.value(), lon.value(), 0.0 };  // 고도(alt)는 기본적으로 0.0
+    ECEF ecef_pos = geodetic2ecef(geodetic);
+    ecef = Eigen::Vector3d(ecef_pos.x, ecef_pos.y, ecef_pos.z);
+  }
+  else {
+    // 기본적으로 기존 ECEF 좌표 사용
+    ecef = Eigen::Vector3d(positionECEF.getValue()[0], positionECEF.getValue()[1], positionECEF.getValue()[2]);
+  }
+  //Eigen::Vector3d ecef(positionECEF.getValue()[0], positionECEF.getValue()[1], positionECEF.getValue()[2]);
   Eigen::Vector3d orient(calibratedOrientationECEF.getValue()[0], calibratedOrientationECEF.getValue()[1], calibratedOrientationECEF.getValue()[2]);
   Eigen::Matrix3d ecef_from_local = euler2rot(orient);
 
