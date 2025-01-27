@@ -838,6 +838,8 @@ class CarrotServ:
     self.goalPosX = 0.0
     self.goalPosY = 0.0
     self.szGoalName = ""
+    self.vpPosPointLatNavi = 0.0
+    self.vpPosPointLonNavi = 0.0
     self.vpPosPointLat = 0.0
     self.vpPosPointLon = 0.0
     self.roadcate = 8
@@ -1225,8 +1227,8 @@ class CarrotServ:
 
     now = time.monotonic()
     dt = now - self.last_calculate_gps_time
-    self.last_calculate_gps_time = now
-    self.vpPosPointLat, self.vpPosPointLon = self.estimate_position(float(self.vpPosPointLat), float(self.vpPosPointLon), v_ego, bearing_calculated, dt)
+    #self.last_calculate_gps_time = now
+    self.vpPosPointLat, self.vpPosPointLon = self.estimate_position(float(self.vpPosPointLatNavi), float(self.vpPosPointLonNavi), v_ego, bearing_calculated, dt + 1.5)
 
     #self.debugText = " {} {:.1f},{:.1f}={:.1f}+{:.1f}".format(self.active_sdi_count, self.nPosAngle, bearing_calculated, bearing, self.bearing_offset)
     #print("nPosAngle = {:.1f},{:.1f} = {:.1f}+{:.1f}".format(self.nPosAngle, bearing_calculated, bearing, self.bearing_offset))
@@ -1734,8 +1736,8 @@ class CarrotServ:
       if self.szPosRoadName == "null":
         self.szPosRoadName = ""
 
-      self.vpPosPointLat = float(json.get("vpPosPointLat", self.vpPosPointLat))
-      self.vpPosPointLon = float(json.get("vpPosPointLon", self.vpPosPointLon))
+      self.vpPosPointLatNavi = float(json.get("vpPosPointLat", self.vpPosPointLatNavi))
+      self.vpPosPointLonNavi = float(json.get("vpPosPointLon", self.vpPosPointLonNavi))
       self.last_calculate_gps_time = time.monotonic()
 
       self.nPosSpeed = float(json.get("nPosSpeed", self.nPosSpeed))
