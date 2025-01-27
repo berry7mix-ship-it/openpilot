@@ -174,7 +174,7 @@ def get_RadarState_from_vision(md, lead_msg: capnp._DynamicStructReader, v_ego: 
   lead_v_rel_pred = lead_msg.v[0] - model_v_ego
   dRel = float(lead_msg.x[0] - RADAR_TO_CAMERA)
   yRel = float(-lead_msg.y[0])
-  dPath = yRel + interp(dRel, md.position.x, md.position.y)
+  dPath = yRel + np.interp(dRel, md.position.x, md.position.y)
   return {
     "dRel": float(dRel),
     "yRel": yRel,
