@@ -173,10 +173,11 @@ def match_vision_to_track(v_ego: float, lead: capnp._DynamicStructReader, tracks
 def get_RadarState_from_vision(md, lead_msg: capnp._DynamicStructReader, v_ego: float, model_v_ego: float):
   lead_v_rel_pred = lead_msg.v[0] - model_v_ego
   dRel = float(lead_msg.x[0] - RADAR_TO_CAMERA)
+  yRel = float(-lead_msg.y[0])
   dPath = yRel + interp(dRel, md.position.x, md.position.y)
   return {
     "dRel": float(dRel),
-    "yRel": float(-lead_msg.y[0]),
+    "yRel": yRel,
     "dPath" : float(dPath),
     "vRel": float(lead_v_rel_pred),
     "vLead": float(v_ego + lead_v_rel_pred),
