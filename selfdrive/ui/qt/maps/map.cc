@@ -211,6 +211,7 @@ void MapWindow::updateState(const UIState &s) {
     bearing = carrotMan.getXPosAngle();
     velocity = carrotMan.getXPosSpeed()/3.6;
     gps_updated = true;
+    locationd_valid = true;
   }
 
   if (gps_updated) {
