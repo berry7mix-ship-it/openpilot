@@ -82,8 +82,8 @@ MapRenderer::MapRenderer(const QMapLibre::Settings &settings, bool online) : m_s
   m_map->resize(fbo->size());
   m_map->setFramebufferObject(fbo->handle(), fbo->size());
 
-  int y_offset = 120;
-  m_map->setMargins({ 0, 256 - y_offset, 0, y_offset });
+  //int y_offset = 100;// 120;
+  //m_map->setMargins({ 0, 256 - y_offset, 0, y_offset });
 
   gl_functions->glViewport(0, 0, WIDTH, HEIGHT);
 
