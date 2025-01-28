@@ -205,8 +205,14 @@ DevicePanel::DevicePanel(SettingsWindow *parent) : ListWidget(parent) {
 
       QProcess process;
       process.start("git", QStringList() << "fetch");
-      process.waitForFinished();
-
+      if (!process.waitForFinished()) {
+        ConfirmationDialog::alert(tr("Git fetch process timed out."), this);
+        return;
+      }
+      if (process.exitStatus() != QProcess::NormalExit) {
+        ConfirmationDialog::alert(tr("Git fetch process crashed."), this);
+        return;
+      }
       if (process.exitCode() != 0) {
         ConfirmationDialog::alert(tr("Failed to fetch updates."), this);
         return;
