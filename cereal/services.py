@@ -78,7 +78,7 @@ _services: dict[str, tuple] = {
   "userFlag": (True, 0., 1),
   "microphone": (True, 10., 10),
 
-  "carrotMan": (False, 0.),
+  "carrotMan": (True, 0.),
 
   # debug
   "uiDebug": (True, 0., 1),
