@@ -587,12 +587,14 @@ class CarrotMan:
   def carrot_cmd_zmq(self):
 
     context = zmq.Context()
-    socket = context.socket(zmq.REP)
-    socket.bind("tcp://*:7710")
+    def setup_socket():
+        socket = context.socket(zmq.REP)
+        socket.bind("tcp://*:7710")
+        poller = zmq.Poller()
+        poller.register(socket, zmq.POLLIN)
+        return socket, poller
 
-    poller = zmq.Poller()
-    poller.register(socket, zmq.POLLIN)
-
+    socket, poller = setup_socket()
     isOnroadCount = 0
     is_tmux_sent = False
 
@@ -603,7 +605,7 @@ class CarrotMan:
 
         if socket in socks and socks[socket] == zmq.POLLIN:
           message = socket.recv(zmq.NOBLOCK)
-          #print(f"Received:7710 request: {message}")
+          print(f"Received:7710 request: {message}")
           json_obj = json.loads(message.decode())
         else:
           json_obj = None
@@ -647,7 +649,9 @@ class CarrotMan:
           socket.send(echo.encode())
       except Exception as e:
         print(f"carrot_cmd_zmq error: {e}")
-        time.sleep(1)
+        socket.close()
+        time.sleep(1) 
+        socket, poller = setup_socket()
 
   def recvall(self, sock, n):
     """n바이트를 수신할 때까지 반복적으로 데이터를 받는 함수"""
