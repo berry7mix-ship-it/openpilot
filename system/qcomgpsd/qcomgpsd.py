@@ -262,7 +262,6 @@ def main() -> NoReturn:
   pm = messaging.PubMaster(['qcomGnss', 'gpsLocation'])
 
   while 1:
-    print("*************** waiting for diag")
     if os.path.exists(ASSIST_DATA_FILE) and want_assistance:
       setup_quectel(diag)
       want_assistance = False
@@ -271,7 +270,6 @@ def main() -> NoReturn:
     if opcode != DIAG_LOG_F:
       cloudlog.error(f"Unhandled opcode: {opcode}")
       continue
-    print("*************** got diag")
     (pending_msgs, log_outer_length), inner_log_packet = unpack_from('<BH', payload), payload[calcsize('<BH'):]
     if pending_msgs > 0:
       cloudlog.debug(f"have {pending_msgs} pending messages")
@@ -283,8 +281,7 @@ def main() -> NoReturn:
     if log_type not in LOG_TYPES:
       continue
 
-    print("*************** got log")
-    if DEBUG:
+    if True or DEBUG:
       print(f"{time.time():.4f}: got log: {log_type} len {len(log_payload)}")
 
     if log_type == LOG_GNSS_OEMDRE_MEASUREMENT_REPORT:
