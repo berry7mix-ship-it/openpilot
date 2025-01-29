@@ -730,6 +730,7 @@ int Localizer::locationd_thread() {
       bool gpsOK = this->is_gps_ok();
       bool sensorsOK = sm.allAliveAndValid({"accelerometer", "gyroscope"});
 
+      /*
       if (!sm.allValid()) {
         for (const char* service : service_list) {
           if (!sm.valid(service)) {
@@ -737,6 +738,7 @@ int Localizer::locationd_thread() {
           }
         }
       }
+      */
       // Log time to first fix
       if (gpsOK && std::isnan(this->ttff) && !std::isnan(this->first_valid_log_time)) {
         this->ttff = std::max(1e-3, (sm[trigger_msg].getLogMonoTime() * 1e-9) - this->first_valid_log_time);
