@@ -189,6 +189,7 @@ def main():
           learner.handle_log(t, which, sm[which])
 
     if sm.updated['liveLocationKalman']:
+      print("liveLocationKalman updated...")
       location = sm['liveLocationKalman']
       """
       if (location.status == log.LiveLocationKalman.Status.valid) and location.positionGeodetic.valid and location.gpsOK:

@@ -281,7 +281,7 @@ def main() -> NoReturn:
     if log_type not in LOG_TYPES:
       continue
 
-    if True or DEBUG:
+    if DEBUG:
       print(f"{time.time():.4f}: got log: {log_type} len {len(log_payload)}")
 
     if log_type == LOG_GNSS_OEMDRE_MEASUREMENT_REPORT:
@@ -330,7 +330,6 @@ def main() -> NoReturn:
     elif log_type == LOG_GNSS_POSITION_REPORT:
       report = unpack_position(log_payload)
       if report["u_PosSource"] != 2:
-        print(f"invalid position source: {report['u_PosSource']}")
         continue
       vNED = [report["q_FltVelEnuMps[1]"], report["q_FltVelEnuMps[0]"], -report["q_FltVelEnuMps[2]"]]
       vNEDsigma = [report["q_FltVelSigmaMps[1]"], report["q_FltVelSigmaMps[0]"], -report["q_FltVelSigmaMps[2]"]]
