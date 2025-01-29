@@ -128,7 +128,7 @@ class CarInterface(CarInterfaceBase):
       ret.longitudinalTuning.kiV = [1.0]
       ret.stoppingDecelRate = 2.0  # reach brake quickly after enabling
       ret.stopAccel = -0.4
-      ret.startingState = True
+      #ret.startingState = True
       ret.startAccel = 1.5
 
       if experimental_long:
