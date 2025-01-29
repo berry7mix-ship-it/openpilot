@@ -189,9 +189,8 @@ def main():
           learner.handle_log(t, which, sm[which])
 
     if sm.updated['liveLocationKalman']:
-      print("liveLocationKalman updated...")
-      location = sm['liveLocationKalman']
       """
+      location = sm['liveLocationKalman']
       if (location.status == log.LiveLocationKalman.Status.valid) and location.positionGeodetic.valid and location.gpsOK:
         bearing = math.degrees(location.calibratedOrientationNED.value[2])
         lat = location.positionGeodetic.value[0]
@@ -239,6 +238,7 @@ def main():
         0.2 <= liveParameters.stiffnessFactor <= 5.0,
         min_sr <= liveParameters.steerRatio <= max_sr,
       ))
+      print("liveParameters.valid = ", liveParameters.valid)
       liveParameters.steerRatioStd = float(P[States.STEER_RATIO].item())
       liveParameters.stiffnessFactorStd = float(P[States.STIFFNESS].item())
       liveParameters.angleOffsetAverageStd = float(P[States.ANGLE_OFFSET].item())
