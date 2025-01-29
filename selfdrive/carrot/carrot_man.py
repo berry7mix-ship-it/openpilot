@@ -1511,7 +1511,7 @@ class CarrotServ:
 
     msg.carrotMan.nGoPosDist = self.nGoPosDist
     msg.carrotMan.nGoPosTime = self.nGoPosTime
-    msg.carrotMan.szSdiDescr = self._get_sdi_descr(self.nSdiType)
+    msg.carrotMan.szSdiDescr = self._get_sdi_descr(-1 if self.nSdiType == 0 and self.nSdiDist == 0 else self.nSdiType)
 
     #coords_str = ";".join([f"{x},{y}" for x, y in coords])
     coords_str = ";".join([f"{x:.2f},{y:.2f},{d:.2f}" for (x, y), d in zip(coords, distances, strict=False)])
