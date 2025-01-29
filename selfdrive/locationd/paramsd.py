@@ -189,8 +189,8 @@ def main():
           learner.handle_log(t, which, sm[which])
 
     if sm.updated['liveLocationKalman']:
-      location = sm['liveLocationKalman']
       """
+      location = sm['liveLocationKalman']
       if (location.status == log.LiveLocationKalman.Status.valid) and location.positionGeodetic.valid and location.gpsOK:
         bearing = math.degrees(location.calibratedOrientationNED.value[2])
         lat = location.positionGeodetic.value[0]
