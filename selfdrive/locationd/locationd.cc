@@ -701,6 +701,7 @@ int Localizer::locationd_thread() {
     this->observation_values_invalid.insert({service, 0.0});
   }
 
+  bool ignore_gps = true;
   while (!do_exit) {
     sm.update();
     if (filterInitialized){
@@ -718,6 +719,14 @@ int Localizer::locationd_thread() {
     const char* trigger_msg = "cameraOdometry";
     if (sm.updated(trigger_msg)) {
       bool inputsOK = sm.allValid() && this->are_inputs_ok();
+      if (ignore_gps) {
+        if(sm.valid(gps_location_socket)) {
+          ignore_gps = false;
+        }
+        else {
+          inputsOK = this->are_inputs_ok();
+        }
+      }
       bool gpsOK = this->is_gps_ok();
       bool sensorsOK = sm.allAliveAndValid({"accelerometer", "gyroscope"});
 
@@ -738,6 +747,7 @@ int Localizer::locationd_thread() {
       pm.send("liveLocationKalman", bytes.begin(), bytes.size());
 
       if (cnt % 1200 == 0 && gpsOK) {  // once a minute
+        ignore_gps = false;
         VectorXd posGeo = this->get_position_geodetic();
         std::string lastGPSPosJSON = util::string_format(
           "{\"latitude\": %.15f, \"longitude\": %.15f, \"altitude\": %.15f}", posGeo(0), posGeo(1), posGeo(2));
