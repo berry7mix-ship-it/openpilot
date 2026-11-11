@@ -48,3 +48,8 @@ class TestFanController:
     for _ in range(10):
       controller.update(90, True)
     assert controller.update(90, True) >= 60
+
+  @pytest.mark.parametrize("controller_class", ALL_CONTROLLERS)
+  def test_fan_ramps_up_before_70c(self, mocker, controller_class):
+    controller = patched_controller(mocker, controller_class)
+    assert controller.update(70, True) >= 50
